@@ -1,0 +1,54 @@
+# ============================================================================
+# M-BIND - configuracao DESTA maquina
+# ============================================================================
+# Este ficheiro e' o unico que muda de maquina para maquina. Tem:
+#   1. a configuracao comum (mbind.cfg, igual em todas as maquinas);
+#   2. os numeros de serie das tres placas;
+#   3. os valores calibrados: PID das duas cabecas e altura do Z.
+#      Sao os que o Klipper grava com SAVE_CONFIG, e ele so' consegue gravar
+#      valores que estejam neste ficheiro.
+# Nao vai para o repositorio (esta no .gitignore). O modelo e' o
+# printer.cfg.exemplo.
+# ============================================================================
+
+[include mbind.cfg]
+[include usb_import.cfg]
+
+# --- Numeros de serie das placas ----------------------------------------------
+# Para os ver:  ls /dev/serial/by-id/
+# A Octopus e' a stm32h723; as cabecas sao as duas stm32g431. Para saber qual
+# e' o T0: desliga o USB da cabeca T1, o que fica na lista e' o T0.
+
+[mcu]
+serial: @SERIAL_OCTOPUS@
+
+[mcu tool_0]
+serial: @SERIAL_T0@
+
+[mcu tool_1]
+serial: @SERIAL_T1@
+
+# --- Valores calibrados desta maquina -----------------------------------------
+# PID das cabecas: PID_CALIBRATE HEATER=extruder TARGET=<temperatura> (ou
+# HEATER=extruder1) e depois SAVE_CONFIG. O Klipper poe um "#" nas linhas
+# daqui e passa a usar os valores novos, no bloco do fim.
+# O resto de cada extrusor esta em hardware/cabeca_t0.cfg e cabeca_t1.cfg.
+
+[extruder]
+control = pid
+pid_kp = 26.213
+pid_ki = 1.304
+pid_kd = 131.721
+
+[extruder1]
+control = pid
+pid_kp = 26.213
+pid_ki = 1.304
+pid_kd = 131.721
+
+# Altura do Z (T0): CALIBRAR_Z, ACCEPT e SAVE_CONFIG. O valor novo fica no bloco
+# do fim e o Klipper poe um "#" na linha daqui.
+# Numa maquina nova: 0 e' um valor de arranque seguro (a maquina julga o bico
+# mais baixo do que esta). Calibrar antes de imprimir.
+[stepper_z]
+position_endstop: 0

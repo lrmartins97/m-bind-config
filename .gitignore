@@ -1,0 +1,20 @@
+# --- De cada maquina (nunca no repositorio) ---
+printer.cfg
+variables.cfg
+ktamv_camera_matrix.json
+
+# --- Criados pelos instaladores de outros programas ---
+mainsail.cfg
+timelapse.cfg
+usb_import.cfg
+ktamv-macros.cfg
+
+# --- Copias e backups ---
+*.bkp
+*.bak
+*.backup
+*-old
+printer-*.cfg
+print-from-usb-klipper-backup/
+.moonraker.conf.bkp
+.theme/
