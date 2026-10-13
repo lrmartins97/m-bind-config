@@ -51,13 +51,19 @@ done
 [ -z "${falta}" ] || erro "Falta instalar pelo KIAUH:${falta}"
 info "Klipper, Moonraker, Mainsail, KlipperScreen e Crowsnest: instalados."
 
+# Se a pasta config ja for o repositorio (por exemplo, o script parou a meio
+# numa corrida anterior), salta os passos 2 a 4 e instala so' o que falta.
+JA_CONFIG=0
 if [ -d "${CONFIG}/.git" ]; then
-    info "A pasta config ja e' o repositorio da M-BIND: nada a fazer."
-    info "Para atualizar:  cd ${CONFIG} && git pull"
-    exit 0
+    JA_CONFIG=1
+    info "A pasta config ja e' o repositorio da M-BIND: so' falta instalar programas."
+    info "(Para atualizar a configuracao:  cd ${CONFIG} && git pull)"
+else
+    [ -f "${REPO_DIR}/mbind.cfg" ] && [ -f "${REPO_DIR}/printer.cfg.exemplo" ] \
+        || erro "Este script tem de estar dentro do repositorio m-bind-config."
 fi
-[ -f "${REPO_DIR}/mbind.cfg" ] && [ -f "${REPO_DIR}/printer.cfg.exemplo" ] \
-    || erro "Este script tem de estar dentro do repositorio m-bind-config."
+
+if [ "${JA_CONFIG}" -eq 0 ]; then
 
 # --- 2. Numeros de serie das placas ------------------------------------------
 titulo "A procurar as placas"
@@ -114,22 +120,29 @@ sed -e "s#@SERIAL_OCTOPUS@#${SERIAL_DIR}/${octopus}#" \
     printer.cfg.exemplo > printer.cfg
 info "printer.cfg criado com os numeros de serie desta maquina."
 
+fi  # fim dos passos 2 a 4
+
 # --- 5. Programas que faltam -------------------------------------------------
-# Cada um so' e' instalado se a pasta dele ainda nao existir.
-instalar() {  # instalar <pasta> <url> <comando de instalacao>
+# Cada programa conta como instalado quando existe o ficheiro que o instalador
+# dele cria (nao basta a pasta: uma instalacao que parou a meio deixa a pasta).
+instalar() {  # instalar <pasta> <url> <ficheiro que prova a instalacao> <comando>
     local pasta="${HOME}/$1"
-    if [ -d "${pasta}" ]; then
+    if [ -e "$3" ]; then
         info "$1: ja instalado."
         return 0
     fi
     titulo "A instalar $1"
-    git clone "$2" "${pasta}"
-    (cd "${pasta}" && eval "$3")
+    [ -d "${pasta}" ] || git clone "$2" "${pasta}"
+    (cd "${pasta}" && eval "$4")
 }
-instalar moonraker-timelapse "${TIMELAPSE_URL}" "make install"
-instalar sonar "${SONAR_URL}" "make config && make install"
-instalar kTAMV "${NOZZLESIGHT_URL}" "bash ./install.sh"
-instalar print-from-usb-klipper "${USB_URL}" "./install.sh --no-restart"
+instalar moonraker-timelapse "${TIMELAPSE_URL}" \
+    "${HOME}/moonraker/moonraker/components/timelapse.py" "make install"
+instalar sonar "${SONAR_URL}" \
+    /etc/systemd/system/sonar.service "make config && sudo make install"
+instalar kTAMV "${NOZZLESIGHT_URL}" \
+    /etc/systemd/system/kTAMV_server.service "bash ./install.sh"
+instalar print-from-usb-klipper "${USB_URL}" \
+    /etc/usb-gcode.conf "./install.sh --no-restart"
 
 # --- 6. Reiniciar e o que falta ----------------------------------------------
 titulo "A reiniciar o Klipper e o Moonraker"
